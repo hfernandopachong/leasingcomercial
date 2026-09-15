@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Interactivo de Leasing Comercial</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Theme Classes */
+        .theme-navy {
+            --primary: #1e3a8a;
+            --primary-dark: #0f172a;
+            --accent: #2563eb;
+            --accent-light: #eff6ff;
+            --badge-bg: #dbeafe;
+            --badge-text: #1e40af;
+        }
+        .theme-emerald {
+            --primary: #064e3b;
+            --primary-dark: #022c22;
+            --accent: #059669;
+            --accent-light: #ecfdf5;
+            --badge-bg: #d1fae5;
+            --badge-text: #065f46;
+        }
+        .theme-indigo {
+            --primary: #312e81;
+            --primary-dark: #1e1b4b;
+            --accent: #4f46e5;
+            --accent-light: #eef2ff;
+            --badge-bg: #e0e7ff;
+            --badge-text: #3730a3;
+        }
+        .theme-dark {
+            --primary: #18181b;
+            --primary-dark: #09090b;
+            --accent: #3f3f46;
+            --accent-light: #f4f4f5;
+            --badge-bg: #e4e4e7;
+            --badge-text: #27272a;
+        }
+        
+        .bg-primary-custom { background-color: var(--primary); }
+        .bg-accent-custom { background-color: var(--accent); }
+        .bg-accent-light-custom { background-color: var(--accent-light); }
+        .text-primary-custom { color: var(--primary); }
+        .text-accent-custom { color: var(--accent); }
+        .border-accent-custom { border-color: var(--accent); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 theme-navy transition-colors duration-300">
+
+    <!-- TOP HEADER NAVBAR -->
+    <header class="bg-primary-custom text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-white/10 rounded-lg">
+                    <i data-lucide="calculator" class="w-7 h-7 text-blue-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">DASHBOARD DE LEASING COMERCIAL</h1>
+                    <p class="text-xs text-slate-300">Centro de Impresión · Simulador Financiero Interactivo</p>
+                </div>
+            </div>
+            
+            <!-- Controls & Theme Selector -->
+            <div class="flex items-center space-x-3 text-xs">
+                <span class="text-slate-300 font-medium hidden md:inline">Tema de Color:</span>
+                <div class="flex bg-white/10 p-1 rounded-lg space-x-1">
+                    <button onclick="changeTheme('theme-navy')" class="w-5 h-5 rounded-full bg-blue-900 border border-white/50 focus:outline-none" title="Azul Marino"></button>
+                    <button onclick="changeTheme('theme-emerald')" class="w-5 h-5 rounded-full bg-emerald-900 border border-white/50 focus:outline-none" title="Verde Esmeralda"></button>
+                    <button onclick="changeTheme('theme-indigo')" class="w-5 h-5 rounded-full bg-indigo-900 border border-white/50 focus:outline-none" title="Índigo Corporativo"></button>
+                    <button onclick="changeTheme('theme-dark')" class="w-5 h-5 rounded-full bg-zinc-900 border border-white/50 focus:outline-none" title="Grafito Oscuro"></button>
+                </div>
+                <button onclick="window.print()" class="flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition font-medium">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>Imprimir / PDF</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- PARAMETERS & STRUCTURING GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- INPUTS PANEL -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1 space-y-5">
+                <div class="flex items-center space-x-2 border-b border-slate-100 pb-3">
+                    <i data-lucide="sliders" class="w-5 h-5 text-accent-custom"></i>
+                    <h2 class="font-bold text-slate-900 text-base">Parámetros Modificables</h2>
+                </div>
+
+                <div class="space-y-4 text-sm">
+                    <!-- Investment -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Inversión Equipo ($)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
+                            <input type="number" id="inputInvestment" value="50000000" step="1000000" oninput="calculateLeasing()" class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-900 font-semibold transition">
+                        </div>
+                    </div>
+
+                    <!-- Initial Payment % -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-600">Cuota Inicial (%)</label>
+                            <span id="initialPctVal" class="text-xs font-bold text-accent-custom">15%</span>
+                        </div>
+                        <input type="range" id="inputInitialPct" min="15" max="50" step="1" value="15" oninput="calculateLeasing()" class="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer">
+                    </div>
+
+                    <!-- Cushion % -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-600">Colchón Técnico (%)</label>
+                            <span id="cushionPctVal" class="text-xs font-bold text-accent-custom">5%</span>
+                        </div>
+                        <input type="range" id="inputCushionPct" min="0" max="20" step="1" value="5" oninput="calculateLeasing()" class="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer">
+                    </div>
+
+                    <!-- Monthly Rate -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tasa Mensual (%)</label>
+                        <div class="relative">
+                            <input type="number" id="inputRate" value="1.8" step="0.1" min="0.1" oninput="calculateLeasing()" class="w-full pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-900 font-semibold transition">
+                            <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 font-bold">%</span>
+                        </div>
+                    </div>
+
+                    <!-- Term -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Plazo (Meses)</label>
+                        <select id="inputTerm" onchange="calculateLeasing()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-900 font-semibold transition">
+                            <option value="12">12 Meses (1 Año)</option>
+                            <option value="24">24 Meses (2 Años)</option>
+                            <option value="36" selected>36 Meses (3 Años)</option>
+                            <option value="48">48 Meses (4 Años)</option>
+                            <option value="60">60 Meses (5 Años)</option>
+                        </select>
+                    </div>
+
+                    <!-- Residual / Option % -->
+                    <div class="p-3 bg-amber-50 rounded-xl border border-amber-200">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-amber-900 flex items-center gap-1">
+                                <i data-lucide="key" class="w-3.5 h-3.5"></i>
+                                Opción de Compra Residual (%)
+                            </label>
+                            <span id="residualPctVal" class="text-xs font-bold text-amber-900">10%</span>
+                        </div>
+                        <input type="range" id="inputResidualPct" min="0" max="30" step="1" value="10" oninput="calculateLeasing()" class="w-full accent-amber-600 h-2 bg-amber-200 rounded-lg cursor-pointer">
+                        <p class="text-[11px] text-amber-700 mt-1">Monto diferido que se paga al final para adquirir el equipo.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STRUCTURING SUMMARY & KPIS -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- KPI CARDS GRID -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    
+                    <!-- KPI 1 -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-accent-custom"></div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cuota Mensual Fija</p>
+                        <h3 id="kpiMonthlyPayment" class="text-2xl font-extrabold text-slate-900">$0</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Amortización constante con residual</p>
+                    </div>
+
+                    <!-- KPI 2 -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Desembolso Inicial</p>
+                        <h3 id="kpiInitialOutflow" class="text-2xl font-extrabold text-slate-900">$0</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Cuota inicial al inicio del contrato</p>
+                    </div>
+
+                    <!-- KPI 3 -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Opción de Compra</p>
+                        <h3 id="kpiResidualValue" class="text-2xl font-extrabold text-amber-900">$0</h3>
+                        <p class="text-[11px] text-amber-600 mt-1">Pago único al mes final</p>
+                    </div>
+                </div>
+
+                <!-- STRUCTURING BREAKDOWN CARD -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-900 text-sm border-b border-slate-100 pb-3 mb-4 flex items-center justify-between">
+                        <span>Desglose de la Estructuración Financiera</span>
+                        <span class="text-xs font-normal text-slate-400">Valores calculados dinámicamente</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                        <div class="flex justify-between py-1.5 border-b border-slate-50">
+                            <span class="text-slate-600">Valor Inversión Inicial:</span>
+                            <span id="outInvestment" class="font-bold text-slate-800">$0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-50">
+                            <span class="text-slate-600">(-) Cuota Inicial:</span>
+                            <span id="outInitialAmount" class="font-bold text-emerald-600">$0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-50">
+                            <span class="text-slate-600">(+) Colchón Técnico:</span>
+                            <span id="outCushionAmount" class="font-bold text-slate-800">$0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-50 bg-slate-50 px-2 rounded">
+                            <span class="text-slate-900 font-semibold">(=) Capital Total Financiado:</span>
+                            <span id="outCapitalFinanced" class="font-extrabold text-blue-700">$0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-50">
+                            <span class="text-slate-600">Total Intereses Proyectados:</span>
+                            <span id="outTotalInterest" class="font-bold text-rose-600">$0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-50 bg-slate-50 px-2 rounded">
+                            <span class="text-slate-900 font-semibold">Costo Total Flujo Leasing:</span>
+                            <span id="outTotalCost" class="font-extrabold text-slate-900">$0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHARTS ROW -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- CHART 1: Composition -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Distribución del Flujo Total</h4>
+                        <div class="h-48 relative">
+                            <canvas id="chartComposition"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- CHART 2: Amortization Curve -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Evolución del Saldo de Capital</h4>
+                        <div class="h-48 relative">
+                            <canvas id="chartBalance"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SENSITIVITY TABLE BY TERMS -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-100 pb-4 mb-4 gap-2">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base">Análisis de Sensibilidad por Plazo</h3>
+                    <p class="text-xs text-slate-500">Comparativa directa de cuotas, intereses y costos totales según el plazo elegido</p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                            <th class="p-3 font-bold">Plazo</th>
+                            <th class="p-3 font-bold">Capital Financiado</th>
+                            <th class="p-3 font-bold">Cuota Mensual</th>
+                            <th class="p-3 font-bold">Opción Compra (Mes N)</th>
+                            <th class="p-3 font-bold">Total Intereses</th>
+                            <th class="p-3 font-bold">Costo Total Flujo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sensitivityTableBody" class="divide-y divide-slate-100">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- FULL AMORTIZATION TABLE -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-100 pb-4 mb-4 gap-2">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base">Tabla de Amortización Dinámica</h3>
+                    <p class="text-xs text-slate-500">Proyección mes a mes con liquidez final y opción de compra</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span id="amortTermBadge" class="text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full">36 Meses</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto max-h-96">
+                <table class="w-full text-left text-xs">
+                    <thead class="sticky top-0 bg-slate-800 text-white shadow">
+                        <tr>
+                            <th class="p-3">Mes</th>
+                            <th class="p-3 text-right">Saldo Inicial</th>
+                            <th class="p-3 text-right">Cuota Mensual</th>
+                            <th class="p-3 text-right">Interés</th>
+                            <th class="p-3 text-right">Abono Capital</th>
+                            <th class="p-3 text-right">Saldo Final</th>
+                        </tr>
+                    </thead>
+                    <tbody id="amortizationTableBody" class="divide-y divide-slate-100 font-mono">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            <p>© Modelo de Leasing Comercial · Centro de Impresión. Desarrollado con tecnología web interactiva.</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Global Chart References
+        let chartCompInstance = null;
+        let chartBalInstance = null;
+
+        // Number Formatter
+        const fmtCOP = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Theme Switcher
+        function changeTheme(themeName) {
+            document.body.className = `bg-slate-50 text-slate-800 ${themeName} transition-colors duration-300`;
+            calculateLeasing();
+        }
+
+        // PMT Standard Financial Formula (Always Positive Output)
+        function PMT(rate, nper, pv, fv = 0) {
+            if (rate === 0) return Math.abs((pv + fv) / nper);
+            const pvif = Math.pow(1 + rate, nper);
+            let pmt = (rate * (pv * pvif + fv)) / (pvif - 1);
+            return Math.abs(pmt);
+        }
+
+        // Main Calculation Engine
+        function calculateLeasing() {
+            // Get Input Values
+            const investment = parseFloat(document.getElementById('inputInvestment').value) || 0;
+            let initialPctVal = parseFloat(document.getElementById('inputInitialPct').value);
+            if (initialPctVal < 15) { initialPctVal = 15; document.getElementById('inputInitialPct').value = 15; }
+            const initialPct = initialPctVal / 100;
+            const cushionPct = parseFloat(document.getElementById('inputCushionPct').value) / 100;
+            const monthlyRate = parseFloat(document.getElementById('inputRate').value) / 100;
+            const termMonths = parseInt(document.getElementById('inputTerm').value);
+            const residualPct = parseFloat(document.getElementById('inputResidualPct').value) / 100;
+
+            // Update Input Labels
+            document.getElementById('initialPctVal').innerText = (initialPct * 100).toFixed(0) + '%';
+            document.getElementById('cushionPctVal').innerText = (cushionPct * 100).toFixed(0) + '%';
+            document.getElementById('residualPctVal').innerText = (residualPct * 100).toFixed(0) + '%';
+            document.getElementById('amortTermBadge').innerText = termMonths + ' Meses';
+
+            // Calculations
+            const initialAmount = investment * initialPct;
+            const cushionAmount = investment * cushionPct;
+            const capitalFinanced = (investment - initialAmount) + cushionAmount;
+            const residualValue = investment * residualPct;
+
+            // PMT calculation (strictly positive)
+            const pmt = Math.abs(PMT(monthlyRate, termMonths, -capitalFinanced, residualValue));
+
+            const totalCuotas = Math.abs(pmt * termMonths);
+            const totalInterests = Math.abs((totalCuotas + residualValue) - capitalFinanced);
+            const totalCost = Math.abs(initialAmount + totalCuotas + residualValue);
+
+            // Update KPIs
+            document.getElementById('kpiMonthlyPayment').innerText = fmtCOP.format(pmt);
+            document.getElementById('kpiInitialOutflow').innerText = fmtCOP.format(initialAmount);
+            document.getElementById('kpiResidualValue').innerText = fmtCOP.format(residualValue);
+
+            // Update Structuring Breakdown
+            document.getElementById('outInvestment').innerText = fmtCOP.format(investment);
+            document.getElementById('outInitialAmount').innerText = fmtCOP.format(initialAmount);
+            document.getElementById('outCushionAmount').innerText = fmtCOP.format(cushionAmount);
+            document.getElementById('outCapitalFinanced').innerText = fmtCOP.format(capitalFinanced);
+            document.getElementById('outTotalInterest').innerText = fmtCOP.format(totalInterests);
+            document.getElementById('outTotalCost').innerText = fmtCOP.format(totalCost);
+
+            // Render Amortization Table
+            renderAmortizationTable(capitalFinanced, pmt, monthlyRate, termMonths, residualValue);
+
+            // Render Sensitivity Table
+            renderSensitivityTable(capitalFinanced, monthlyRate, residualValue, initialAmount, termMonths);
+
+            // Update Charts
+            renderCharts(initialAmount, totalCuotas, residualValue, capitalFinanced, pmt, monthlyRate, termMonths);
+        }
+
+        // Render Amortization Table
+        function renderAmortizationTable(capital, pmt, rate, term, residual) {
+            const tbody = document.getElementById('amortizationTableBody');
+            tbody.innerHTML = '';
+
+            let balance = capital;
+
+            for (let m = 1; m <= term; m++) {
+                const interest = balance * rate;
+                const amortization = pmt - interest;
+                let finalBalance = balance - amortization;
+
+                if (m === term) {
+                    finalBalance = Math.max(0, finalBalance - residual);
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = m % 2 === 0 ? 'bg-slate-50 hover:bg-slate-100 transition' : 'bg-white hover:bg-slate-100 transition';
+
+                tr.innerHTML = `
+                    <td class="p-3 text-slate-900 font-bold">${m}</td>
+                    <td class="p-3 text-right text-slate-600">${fmtCOP.format(balance)}</td>
+                    <td class="p-3 text-right text-blue-700 font-semibold">${fmtCOP.format(pmt)}</td>
+                    <td class="p-3 text-right text-rose-600">${fmtCOP.format(interest)}</td>
+                    <td class="p-3 text-right text-emerald-600">${fmtCOP.format(amortization)}</td>
+                    <td class="p-3 text-right text-slate-900 font-bold">${fmtCOP.format(Math.max(0, finalBalance))}</td>
+                `;
+
+                tbody.appendChild(tr);
+                balance = finalBalance;
+            }
+        }
+
+        // Render Sensitivity Table
+        function renderSensitivityTable(capital, rate, residual, initialAmount, selectedTerm) {
+            const tbody = document.getElementById('sensitivityTableBody');
+            tbody.innerHTML = '';
+
+            const terms = [12, 24, 36, 48, 60];
+
+            terms.forEach(t => {
+                const pmt = PMT(rate, t, -capital, residual);
+                const totalCuotas = pmt * t;
+                const totalInterests = (totalCuotas + residual) - capital;
+                const totalFlow = initialAmount + totalCuotas + residual;
+
+                const isSelected = t === selectedTerm;
+
+                const tr = document.createElement('tr');
+                tr.className = isSelected ? 'bg-blue-50/80 font-bold border-l-4 border-blue-600' : 'hover:bg-slate-50 transition';
+
+                tr.innerHTML = `
+                    <td class="p-3 ${isSelected ? 'text-blue-900' : 'text-slate-900'}">${t} Meses ${isSelected ? '★' : ''}</td>
+                    <td class="p-3 text-slate-700">${fmtCOP.format(capital)}</td>
+                    <td class="p-3 text-blue-700 font-bold">${fmtCOP.format(pmt)}</td>
+                    <td class="p-3 text-amber-800">${fmtCOP.format(residual)}</td>
+                    <td class="p-3 text-rose-600">${fmtCOP.format(totalInterests)}</td>
+                    <td class="p-3 text-slate-900 font-extrabold">${fmtCOP.format(totalFlow)}</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Render ChartJS Charts
+        function renderCharts(initial, cuotas, residual, capital, pmt, rate, term) {
+            // Chart 1: Pie Composition
+            const ctxComp = document.getElementById('chartComposition').getContext('2d');
+            if (chartCompInstance) chartCompInstance.destroy();
+
+            chartCompInstance = new Chart(ctxComp, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Desembolso Inicial', 'Total Cuotas Mensuales', 'Opción de Compra Final'],
+                    datasets: [{
+                        data: [initial, cuotas, residual],
+                        backgroundColor: ['#10b981', '#2563eb', '#f59e0b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // Chart 2: Balance Curve Over Time
+            const ctxBal = document.getElementById('chartBalance').getContext('2d');
+            if (chartBalInstance) chartBalInstance.destroy();
+
+            const labels = [];
+            const dataBalance = [];
+            let bal = capital;
+
+            labels.push('M0');
+            dataBalance.push(bal);
+
+            for (let m = 1; m <= term; m++) {
+                const interest = bal * rate;
+                const amortization = pmt - interest;
+                bal = bal - amortization;
+                labels.push('M' + m);
+                dataBalance.push(Math.max(0, bal));
+            }
+
+            chartBalInstance = new Chart(ctxBal, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Saldo de Capital ($)',
+                        data: dataBalance,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { ticks: { callback: value => '$' + (value/1000000).toFixed(0) + 'M' } }
+                    }
+                }
+            });
+        }
+
+        // Initial Run
+        window.onload = () => {
+            calculateLeasing();
+        };
+    </script>
+</body>
+</html>
